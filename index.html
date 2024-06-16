@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Client</title>
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <div id="login-section">
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button id="login-button">Login</button>
+    </div>
+    <div id="post-section" style="display:none;">
+        <h2>Create Post</h2>
+        <textarea id="post-content" placeholder="What's on your mind?"></textarea>
+        <button id="create-post-button">Create Post</button>
+    </div>
+    <div id="posts-section" style="display:none;">
+        <h2>Posts</h2>
+        <div id="posts-container"></div>
+    </div>
+</body>
+</html>
