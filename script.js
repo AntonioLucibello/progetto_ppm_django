@@ -80,8 +80,7 @@ function fetchCurrentUser() {
     .then(response => response.json())
     .then(data => {
         if (data['code'] === 'token_not_valid') {
-            throw new Error('invalid token!');
-            
+            throw new Error('Invalid token!');
         } else {
             currentUser = data;
         }
