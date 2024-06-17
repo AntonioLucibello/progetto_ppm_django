@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework.views import APIView
@@ -18,6 +19,9 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return User.objects.exclude(id=self.request.user.id)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def follow(self, request, pk=None):
@@ -42,8 +46,8 @@ class PostViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        following_users = user.following.all()
-        return Post.objects.filter(author__in=following_users)
+        following = user.following.all()
+        return Post.objects.filter(Q(author__in=following) | Q(author=user))
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
