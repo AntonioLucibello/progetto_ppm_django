@@ -2,8 +2,10 @@ const BASE_URL = 'http://127.0.0.1:8000/api/';
 const TOKEN_URL = BASE_URL + 'token/';
 const POSTS_URL = BASE_URL + 'posts/';
 const USERS_URL = BASE_URL + 'users/';
+const CURRENT_USER_URL = BASE_URL + 'current_user/';
 
 let accessToken = '';
+let currentUser = {};
 
 document.getElementById('login-button').addEventListener('click', (event) => {
     event.preventDefault();
@@ -30,15 +32,30 @@ function login() {
     .then(data => {
         if (data.access) {
             accessToken = data.access;
-            document.getElementById('login-section').style.display = 'none';
-            document.getElementById('post-section').style.display = 'block';
-            document.getElementById('posts-section').style.display = 'block';
-            document.getElementById('users-section').style.display = 'block';
-            fetchPosts();
-            fetchUsers();
+            fetchCurrentUser().then(() => {
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('post-section').style.display = 'block';
+                document.getElementById('posts-section').style.display = 'block';
+                document.getElementById('users-section').style.display = 'block';
+                fetchPosts();
+                fetchUsers();
+            });
         } else {
             alert('Login failed. Please check your credentials.');
         }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function fetchCurrentUser() {
+    return fetch(CURRENT_USER_URL, {
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        currentUser = data;
     })
     .catch(error => console.error('Error:', error));
 }
@@ -79,6 +96,7 @@ function fetchPosts() {
                 <p>${new Date(post.created_at).toLocaleString()}</p>
                 <p>Likes: ${post.likes_count}</p>
                 <button onclick="toggleLike(${post.id}, ${post.user_has_liked})">${post.user_has_liked ? 'Unlike' : 'Like'}</button>
+                ${post.author.id === currentUser.id ? `<button onclick="deletePost(${post.id})">Delete</button>` : ''}
                 <hr>
             `;
             postsContainer.appendChild(postElement);
@@ -138,6 +156,23 @@ function unfollowUser(userId) {
     .then(data => {
         fetchUsers();
         fetchPosts();
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function deletePost(postId) {
+    fetch(`${POSTS_URL}${postId}/`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+        },
+    })
+    .then(response => {
+        if (response.ok) {
+            fetchPosts();
+        } else {
+            alert('Failed to delete post.');
+        }
     })
     .catch(error => console.error('Error:', error));
 }
