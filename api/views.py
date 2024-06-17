@@ -35,6 +35,18 @@ class PostViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def like(self, request, pk=None):
+        post = self.get_object()
+        Like.objects.get_or_create(post=post, user=request.user)
+        return Response({'detail': 'Liked successfully.'}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def unlike(self, request, pk=None):
+        post = self.get_object()
+        Like.objects.filter(post=post, user=request.user).delete()
+        return Response({'detail': 'Unliked successfully.'}, status=status.HTTP_200_OK)
+
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
