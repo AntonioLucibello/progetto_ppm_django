@@ -67,6 +67,13 @@ class PostViewSet(viewsets.ModelViewSet):
             return Response({'detail': 'Post unliked successfully.'}, status=status.HTTP_200_OK)
         return Response({'detail': 'You have not liked this post.'}, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
+    def comments(self, request, pk=None):
+        post = self.get_object()
+        comments = Comment.objects.filter(post=post).order_by('created_at')
+        serializer = CommentSerializer(comments, many=True)
+        return Response(serializer.data)
+
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer

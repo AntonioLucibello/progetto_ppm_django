@@ -15,14 +15,22 @@ class UserSerializer(serializers.ModelSerializer):
             return request.user in obj.followers.all()
         return False
 
+class CommentSerializer(serializers.ModelSerializer):
+    author = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'post', 'author', 'content', 'created_at']
+
 class PostSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     likes_count = serializers.IntegerField(source='likes.count', read_only=True)
     user_has_liked = serializers.SerializerMethodField()
+    comments = CommentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
-        fields = ['id', 'author', 'content', 'created_at', 'likes_count', 'user_has_liked']
+        fields = ['id', 'author', 'content', 'created_at', 'likes_count', 'user_has_liked', 'comments']
 
     def get_user_has_liked(self, obj):
         request = self.context.get('request', None)
@@ -30,16 +38,9 @@ class PostSerializer(serializers.ModelSerializer):
             return obj.likes.filter(user=request.user).exists()
         return False
 
-class CommentSerializer(serializers.ModelSerializer):
-    author = UserSerializer(read_only=True)
-    
-    class Meta:
-        model = Comment
-        fields = ['id', 'post', 'author', 'content', 'created_at']
-
 class LikeSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
-    
+
     class Meta:
         model = Like
         fields = ['id', 'post', 'user', 'created_at']

@@ -3,21 +3,36 @@ const TOKEN_URL = BASE_URL + 'token/';
 const POSTS_URL = BASE_URL + 'posts/';
 const USERS_URL = BASE_URL + 'users/';
 const CURRENT_USER_URL = BASE_URL + 'current_user/';
+const COMMENTS_URL = BASE_URL + 'comments/';
 
-let accessToken = localStorage.getItem('ppm_django_access_token');
+let accessToken = localStorage.getItem('ppm_django_access_token') || '';
 let currentUser = {};
 
-if (accessToken) {
-    fetchCurrentUser().then(() => {
-        showSections();
-        fetchPosts();
-        fetchUsers();
-    }).catch(() => {
-        localStorage.removeItem('ppm_django_access_token');
-        accessToken = '';
-        hideSections();
+window.onload = () => {
+    if (accessToken) {
+        fetchCurrentUser()
+            .then(() => {
+                showSections();
+                fetchPosts();
+                fetchUsers();
+            })
+            .catch(() => {
+                localStorage.removeItem('ppm_django_access_token');
+                accessToken = '';
+                hideSections();
+            });
+    }
+
+    document.getElementById('login-button').addEventListener('click', (event) => {
+        event.preventDefault();
+        login();
     });
-}
+
+    document.getElementById('create-post-button').addEventListener('click', (event) => {
+        event.preventDefault();
+        createPost();
+    });
+};
 
 function showSections() {
     document.getElementById('login-section').style.display = 'none';
@@ -32,16 +47,6 @@ function hideSections() {
     document.getElementById('posts-section').style.display = 'none';
     document.getElementById('users-section').style.display = 'none';
 }
-
-document.getElementById('login-button').addEventListener('click', (event) => {
-    event.preventDefault();
-    login();
-});
-
-document.getElementById('create-post-button').addEventListener('click', (event) => {
-    event.preventDefault();
-    createPost();
-});
 
 function login() {
     const username = document.getElementById('username').value;
@@ -77,13 +82,18 @@ function fetchCurrentUser() {
             'Authorization': `Bearer ${accessToken}`,
         },
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data['code'] === 'token_not_valid') {
-            throw new Error('Invalid token!');
-        } else {
-            currentUser = data;
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Invalid token');
         }
+        return response.json();
+    })
+    .then(data => {
+        currentUser = data;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        throw error;
     });
 }
 
@@ -98,7 +108,12 @@ function createPost() {
         },
         body: JSON.stringify({ content }),
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to create post');
+        }
+        return response.json();
+    })
     .then(data => {
         document.getElementById('post-content').value = '';
         fetchPosts();
@@ -125,8 +140,69 @@ function fetchPosts() {
                 <button onclick="toggleLike(${post.id}, ${post.user_has_liked})">${post.user_has_liked ? 'Unlike' : 'Like'}</button>
                 ${post.author.id === currentUser.id ? `<button onclick="deletePost(${post.id})">Delete</button>` : ''}
                 <hr>
+                <textarea id="comment-content-${post.id}" placeholder="Write a comment..."></textarea>
+                <button id="comment-button-${post.id}">Comment</button>
+                <div id="comments-container-${post.id}"></div>
+                <hr>
             `;
             postsContainer.appendChild(postElement);
+            addCommentButtonListener(post.id);
+            fetchComments(post.id);
+        });
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function addCommentButtonListener(postId) {
+    document.getElementById(`comment-button-${postId}`).addEventListener('click', (event) => {
+        event.preventDefault();
+        createComment(postId);
+    });
+}
+
+function createComment(postId) {
+    const content = document.getElementById(`comment-content-${postId}`).value;
+    console.log(`Creating comment for post ID: ${postId} with content: ${content}`);
+
+    fetch(COMMENTS_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ post: postId, content }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Comment creation response:', data);
+        if (data.id) {
+            fetchComments(postId);
+            document.getElementById(`comment-content-${postId}`).value = '';
+        } else {
+            alert('Failed to create comment.');
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function fetchComments(postId) {
+    fetch(`${POSTS_URL}${postId}/comments/`, {
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+        },
+    })
+    .then(response => response.json())
+    .then(comments => {
+        const commentsContainer = document.getElementById(`comments-container-${postId}`);
+        commentsContainer.innerHTML = '';
+        comments.forEach(comment => {
+            const commentElement = document.createElement('div');
+            commentElement.innerHTML = `
+                <p><strong>${comment.author.username}</strong>: ${comment.content}</p>
+                <p>${new Date(comment.created_at).toLocaleString()}</p>
+                <hr>
+            `;
+            commentsContainer.appendChild(commentElement);
         });
     })
     .catch(error => console.error('Error:', error));
@@ -138,7 +214,12 @@ function fetchUsers() {
             'Authorization': `Bearer ${accessToken}`,
         },
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to fetch users');
+        }
+        return response.json();
+    })
     .then(users => {
         const usersContainer = document.getElementById('users-container');
         usersContainer.innerHTML = '';
@@ -164,7 +245,12 @@ function followUser(userId) {
             'Authorization': `Bearer ${accessToken}`,
         },
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to follow user');
+        }
+        return response.json();
+    })
     .then(data => {
         fetchUsers();
         fetchPosts();
@@ -179,7 +265,12 @@ function unfollowUser(userId) {
             'Authorization': `Bearer ${accessToken}`,
         },
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to unfollow user');
+        }
+        return response.json();
+    })
     .then(data => {
         fetchUsers();
         fetchPosts();
@@ -195,11 +286,10 @@ function deletePost(postId) {
         },
     })
     .then(response => {
-        if (response.ok) {
-            fetchPosts();
-        } else {
-            alert('Failed to delete post.');
+        if (!response.ok) {
+            throw new Error('Failed to delete post');
         }
+        fetchPosts();
     })
     .catch(error => console.error('Error:', error));
 }
@@ -212,7 +302,12 @@ function toggleLike(postId, userHasLiked) {
             'Authorization': `Bearer ${accessToken}`,
         },
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to toggle like');
+        }
+        return response.json();
+    })
     .then(data => {
         fetchPosts();
     })
