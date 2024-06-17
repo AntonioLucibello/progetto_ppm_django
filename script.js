@@ -4,8 +4,34 @@ const POSTS_URL = BASE_URL + 'posts/';
 const USERS_URL = BASE_URL + 'users/';
 const CURRENT_USER_URL = BASE_URL + 'current_user/';
 
-let accessToken = '';
+let accessToken = localStorage.getItem('ppm_django_access_token');
 let currentUser = {};
+
+if (accessToken) {
+    fetchCurrentUser().then(() => {
+        showSections();
+        fetchPosts();
+        fetchUsers();
+    }).catch(() => {
+        localStorage.removeItem('ppm_django_access_token');
+        accessToken = '';
+        hideSections();
+    });
+}
+
+function showSections() {
+    document.getElementById('login-section').style.display = 'none';
+    document.getElementById('post-section').style.display = 'block';
+    document.getElementById('posts-section').style.display = 'block';
+    document.getElementById('users-section').style.display = 'block';
+}
+
+function hideSections() {
+    document.getElementById('login-section').style.display = 'block';
+    document.getElementById('post-section').style.display = 'none';
+    document.getElementById('posts-section').style.display = 'none';
+    document.getElementById('users-section').style.display = 'none';
+}
 
 document.getElementById('login-button').addEventListener('click', (event) => {
     event.preventDefault();
@@ -32,11 +58,9 @@ function login() {
     .then(data => {
         if (data.access) {
             accessToken = data.access;
+            localStorage.setItem('ppm_django_access_token', accessToken);
             fetchCurrentUser().then(() => {
-                document.getElementById('login-section').style.display = 'none';
-                document.getElementById('post-section').style.display = 'block';
-                document.getElementById('posts-section').style.display = 'block';
-                document.getElementById('users-section').style.display = 'block';
+                showSections();
                 fetchPosts();
                 fetchUsers();
             });
@@ -55,9 +79,13 @@ function fetchCurrentUser() {
     })
     .then(response => response.json())
     .then(data => {
-        currentUser = data;
-    })
-    .catch(error => console.error('Error:', error));
+        if (data['code'] === 'token_not_valid') {
+            throw new Error('invalid token!');
+            
+        } else {
+            currentUser = data;
+        }
+    });
 }
 
 function createPost() {
