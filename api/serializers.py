@@ -3,13 +3,17 @@ from .models import User, Post, Comment, Like
 
 class UserSerializer(serializers.ModelSerializer):
     followers_count = serializers.IntegerField(source='followers.count', read_only=True)
+    is_following = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'bio', 'following', 'followers_count']
-        extra_kwargs = {
-            'password': {'write_only': True},
-        }
+        fields = ['id', 'username', 'email', 'bio', 'followers_count', 'is_following']
+
+    def get_is_following(self, obj):
+        request = self.context.get('request', None)
+        if request:
+            return request.user in obj.followers.all()
+        return False
 
 class PostSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)

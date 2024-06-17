@@ -101,8 +101,9 @@ function fetchUsers() {
             const userElement = document.createElement('div');
             userElement.innerHTML = `
                 <p><strong>${user.username}</strong> (Followers: ${user.followers_count})</p>
-                <button onclick="followUser(${user.id})">Follow</button>
-                <button onclick="unfollowUser(${user.id})">Unfollow</button>
+                <button onclick="${user.is_following ? `unfollowUser(${user.id})` : `followUser(${user.id})`}">
+                    ${user.is_following ? 'Unfollow' : 'Follow'}
+                </button>
                 <hr>
             `;
             usersContainer.appendChild(userElement);
