@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -26,6 +27,9 @@ SECRET_KEY = "django-insecure-u-pchljmp@6!vy!&l(csb$lg4%n4u4p=iwyo8*e78_&4snv*lz
 DEBUG = True
 
 ALLOWED_HOSTS = ['web-production-079b.up.railway.app']
+
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Application definition
 

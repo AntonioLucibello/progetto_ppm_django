@@ -1,4 +1,4 @@
-const BASE_URL = 'http://127.0.0.1:8000/api/';
+const BASE_URL = 'https://web-production-079b.up.railway.app/api/';
 const TOKEN_URL = BASE_URL + 'token/';
 const POSTS_URL = BASE_URL + 'posts/';
 const USERS_URL = BASE_URL + 'users/';
