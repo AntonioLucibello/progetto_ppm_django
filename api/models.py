@@ -7,7 +7,7 @@ class User(AbstractUser):
     
     groups = models.ManyToManyField(
         Group,
-        related_name='custom_user_set',  # Change related_name to avoid clashes
+        related_name='custom_user_set',
         blank=True,
         help_text=(
             'The groups this user belongs to. A user will get all permissions '
@@ -17,7 +17,7 @@ class User(AbstractUser):
     )
     user_permissions = models.ManyToManyField(
         Permission,
-        related_name='custom_user_set',  # Change related_name to avoid clashes
+        related_name='custom_user_set',
         blank=True,
         help_text='Specific permissions for this user.',
         related_query_name='custom_user',
