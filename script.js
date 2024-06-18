@@ -139,8 +139,7 @@ function fetchPosts() {
                 <p>Likes: ${post.likes_count}</p>
                 <button onclick="toggleLike(${post.id}, ${post.user_has_liked})">${post.user_has_liked ? 'Unlike' : 'Like'}</button>
                 ${post.author.id === currentUser.id ? `<button onclick="deletePost(${post.id})">Delete</button>` : ''}
-                <hr>
-                <textarea id="comment-content-${post.id}" placeholder="Write a comment..."></textarea>
+                <textarea id="comment-content-${post.id}" placeholder="Write a comment..." style="display:block; margin-top: 20px;"></textarea>
                 <button id="comment-button-${post.id}">Comment</button>
                 <div id="comments-container-${post.id}"></div>
                 <hr>
@@ -200,7 +199,6 @@ function fetchComments(postId) {
             commentElement.innerHTML = `
                 <p><strong>${comment.author.username}</strong>: ${comment.content}</p>
                 <p>${new Date(comment.created_at).toLocaleString()}</p>
-                <hr>
             `;
             commentsContainer.appendChild(commentElement);
         });
